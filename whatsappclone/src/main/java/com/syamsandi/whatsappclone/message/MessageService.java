@@ -3,6 +3,10 @@ package com.syamsandi.whatsappclone.message;
 import com.syamsandi.whatsappclone.chat.Chat;
 import com.syamsandi.whatsappclone.chat.ChatRepository;
 import com.syamsandi.whatsappclone.file.FileService;
+import com.syamsandi.whatsappclone.file.FileUtils;
+import com.syamsandi.whatsappclone.notification.Notification;
+import com.syamsandi.whatsappclone.notification.NotificationService;
+import com.syamsandi.whatsappclone.notification.NotificationType;
 import com.syamsandi.whatsappclone.user.User;
 import com.syamsandi.whatsappclone.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,6 +29,7 @@ public class MessageService {
     private final UserRepository userRepository;
     private final MessageMapper messageMapper;
     private final FileService fileService;
+    private final NotificationService notificationService;
 
     @Transactional
     public void saveMessage(Authentication auth, MessageRequest messageRequest) {
@@ -38,7 +43,18 @@ public class MessageService {
         message.setType(messageRequest.getType());
         message.setState(MessageState.SENT);
         messageRepository.save(message);
-        // todo notification
+
+        Notification notification = Notification.builder()
+                .chatId(chat.getId())
+                .senderId(messageRequest.getSenderId())
+                .receiverId(messageRequest.getReceiverId())
+                .content(messageRequest.getContent())
+                .messageType(messageRequest.getType())
+                .type(NotificationType.MESSAGE)
+                .chatName(chat.getChatName(message.getSenderId()))
+                .build();
+
+        notificationService.sendNotification(message.getReceiverId(),notification);
     }
 
     @Transactional(readOnly = true)
@@ -48,28 +64,47 @@ public class MessageService {
     }
     @Transactional
     public void setMessageState(Authentication auth, String chatId) {
-        validateAndGetChat(auth,chatId);
+        Chat chat = validateAndGetChat(auth, chatId);
         messageRepository.setMessagesSeenByChatId(chatId,MessageState.SEEN.toString());
-        //todo nootification
+
+        final String otherUserId = getOtherUserId(auth,chat);
+        final String currentUserId = getCurrentUserId(auth,chat);
+        Notification notification = Notification.builder()
+                .chatId(chat.getId())
+                .senderId(currentUserId)
+                .receiverId(otherUserId)
+                .type(NotificationType.SEEN)
+                .build();
+
+        notificationService.sendNotification(otherUserId,notification);
     }
     @Transactional
     public void uploadMediaMessage(Authentication auth, String chatId, MultipartFile file) {
         Chat chat = validateAndGetChat(auth,chatId);
 
-        final String senderId = getCurrentUserId(auth,chat);
-        final String receiverId = getOtherUserId(auth,chat);
-        final String filePath = fileService.saveFile(file,senderId);
+        final String currentUserId = getCurrentUserId(auth,chat);
+        final String otherUserId = getOtherUserId(auth,chat);
+        final String filePath = fileService.saveFile(file,currentUserId);
 
         Message message = new Message();
         message.setChat(chat);
-        message.setSenderId(senderId);
-        message.setReceiverId(receiverId);
+        message.setSenderId(currentUserId);
+        message.setReceiverId(otherUserId);
         message.setType(MessageType.IMAGE);
         message.setState(MessageState.SENT);
         message.setMediaFilePath(filePath);
         messageRepository.save(message);
 
-        //todo notification
+        Notification notification = Notification.builder()
+                .chatId(chat.getId())
+                .senderId(currentUserId)
+                .receiverId(otherUserId)
+                .messageType(MessageType.IMAGE)
+                .type(NotificationType.IMAGE)
+                .media(FileUtils.readFileFromLocation(filePath))
+                .build();
+
+        notificationService.sendNotification(otherUserId,notification);
 
     }
 
