@@ -24,6 +24,7 @@ public class ChatMapper {
                 .isOtherUserOnline(isOtherUserOnline)
                 .senderId(chat.getSender().getId())
                 .receiverId(chat.getReceiver().getId())
+                //todo read the media file
                 .build();
     }
 }
