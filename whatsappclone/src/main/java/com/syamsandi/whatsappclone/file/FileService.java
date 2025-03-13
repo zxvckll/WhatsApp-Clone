@@ -45,7 +45,7 @@ public class FileService {
         }
         // ./uploads/users/userId/currentTimeMillis.extension
         final String fileExtension = getFileExtension(sourceFile.getOriginalFilename());
-        String targetFilePath = finalUploadPath + separator + currentTimeMillis() + fileExtension;
+        String targetFilePath = finalUploadPath + separator + currentTimeMillis() + "." + fileExtension;
         Path targetPath = Paths.get(targetFilePath);
         try {
             Files.write(targetPath,sourceFile.getBytes());

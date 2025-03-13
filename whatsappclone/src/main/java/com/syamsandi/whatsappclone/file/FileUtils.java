@@ -15,7 +15,7 @@ public class FileUtils {
     private FileUtils() {}
     public static byte[] readFileFromLocation(String fileUrl) {
         if(StringUtils.isBlank(fileUrl)) {
-            return null;
+            return new byte[0];
         }
         try {
             Path file = new File(fileUrl).toPath();

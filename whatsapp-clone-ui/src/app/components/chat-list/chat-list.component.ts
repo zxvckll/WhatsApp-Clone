@@ -3,6 +3,8 @@ import {ChatResponse} from '../../services/models/chat-response';
 import {DatePipe} from '@angular/common';
 import {UserResponse} from '../../services/models/user-response';
 import { UserService } from '../../services/services/user.service';
+import {ChatService} from '../../services/services/chat.service';
+import {KeycloakService} from '../../utils/keycloak/keycloak.service';
 
 @Component({
   selector: 'app-chat-list',
@@ -18,8 +20,11 @@ export class ChatListComponent {
   contacts: Array<UserResponse> = [];
   chatSelected = output<ChatResponse>()
 
+
   constructor(
     private userService: UserService,
+    private chatService: ChatService,
+    private keycloakService: KeycloakService
   ) {
   }
 
@@ -46,5 +51,23 @@ export class ChatListComponent {
 
   selectContact(contact: UserResponse) {
 
+    this.chatService.createChat({
+      'sender-id': this.keycloakService.userId as string,
+      'receiver-id': contact.id as string,
+    }).subscribe({
+      next: (result) => {
+        const chatResponse: ChatResponse = {
+          id:result.response,
+          name: contact.firstName + ' ' + contact.lastName,
+          otherUserOnline: contact.online,
+          lastMessageTime: contact.lastSeen,
+          senderId: this.keycloakService.userId as string,
+          receiverId:contact.id
+        };
+        this.chats().unshift(chatResponse);
+        this.searchNewContact = false;
+        this.chatSelected.emit(chatResponse);
+      }
+    });
   }
 }
