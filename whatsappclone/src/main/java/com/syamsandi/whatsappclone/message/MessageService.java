@@ -65,10 +65,9 @@ public class MessageService {
     @Transactional
     public void setMessageState(Authentication auth, String chatId) {
         Chat chat = validateAndGetChat(auth, chatId);
-        messageRepository.setMessagesSeenByChatId(chatId,MessageState.SEEN.toString());
-
         final String otherUserId = getOtherUserId(auth,chat);
         final String currentUserId = getCurrentUserId(auth,chat);
+        messageRepository.setMessagesSeenByChatId(chatId,MessageState.SEEN,currentUserId);
         Notification notification = Notification.builder()
                 .chatId(chat.getId())
                 .senderId(currentUserId)

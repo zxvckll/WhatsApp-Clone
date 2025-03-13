@@ -21,7 +21,7 @@ import java.awt.*;
                 "WHERE m.chat.id = :chatId ORDER BY m.createdDate ASC ")
 @NamedQuery(name = MessageConstants.SET_MESSAGES_TO_SEEN_BY_CHAT,
         query = "UPDATE Message m SET m.state = :newState " +
-                "WHERE m.chat.id = :chatId")
+                "WHERE m.chat.id = :chatId AND m.receiverId = :currentUserId")
 
 public class Message extends BaseAuditingEntity {
 

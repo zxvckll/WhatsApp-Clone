@@ -14,5 +14,5 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     @Query(name = MessageConstants.SET_MESSAGES_TO_SEEN_BY_CHAT)
     @Modifying
-    void setMessagesSeenByChatId(@Param("chatId") String chatId, @Param("newState") String newState);
+    void setMessagesSeenByChatId(@Param("chatId") String chatId, @Param("newState") MessageState newState, @Param("currentUserId") String currentUserId);
 }
